@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Cursor Key Test</title>
+        <script type="text/javascript" src="jquery-1.11.3.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+           $(document.body).on('keydown', function(e) {
+            switch (e.which) {
+                // key code for left arrow
+                case 37:
+                    console.log('left arrow key pressed!');
+                    break;
+                case 38:
+                    console.log('up arrow key pressed!');
+                    break;
+                // key code for right arrow
+                case 39:
+                    console.log('right arrow key pressed!');
+                    break;
+                case 40:
+                    console.log('down arrow key pressed!');
+                    break;
+                case 187:
+                    console.log('plus key pressed!');
+                    break;
+                case 189:
+                    console.log('minus key pressed!');
+                    break;
+                default:
+                    console.log('key code = ' + e.which);
+            }
+        }); 
+        </script>
+        open javascript console and press a key
+    </body>
+</html>
