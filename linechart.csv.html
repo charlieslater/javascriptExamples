@@ -30,11 +30,8 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50},
 
 console.log("width = " + width);
 
-var myScale = d3.scale.linear().domain([-10, 10]).range([0, 600]);
-
-var x = d3.scale.linear().range(0,width);
-
-var y = d3.scale.linear().range(height,0);
+var x;
+var y;
 
 d3.csv("oneLineSampleGradientOne.csv", check_input, function(error, data) {
   if (error) throw error;
@@ -90,15 +87,33 @@ function drawit(data) {
       .call(xAxis);
 
   console.log("drawit: append y axis");
+
+  svg.append("text")
+       .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
+       .style("text-anchor", "middle")
+       .text("Seconds");
+
   svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
+
+  svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Volts");
+
+ /*
     .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
-      .text("voltage");
+      .style("text-anchor", "middle")
+      .text("Volts");
+*/
 
   svg.append("path")
       .datum(data)
