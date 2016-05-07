@@ -38,6 +38,8 @@ d3.csv("oneLineSampleGradientOne.csv", check_input, function(error, data) {
 
   var xmin = d3.min(data, function(d) { return d.seconds; })
   var xmax = d3.max(data, function(d) { return d.seconds; });
+  xmin = -0.0005;
+  xmax = 0.0005;
   var ymin = d3.min(data, function(d) { return d.voltage; });
   var ymax = d3.max(data, function(d) { return d.voltage; });
   console.log("d3.csv: xmin = " + xmin);
