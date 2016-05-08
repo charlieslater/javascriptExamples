@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+  font: 10px sans-serif;
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.x.axis path {
+  display: none;
+}
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+</style>
+
+<body>
+<script src="//d3js.org/d3.v3.js"></script>
+<script>
+
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+console.log("width = " + width);
+
+var x;
+var y;
+var sinedata;
+
+d3.csv("pulse.csv", check_input, function(error, data) {
+  if (error) throw error;
+  plotdata(data);
+  /*
+  var xmin = d3.min(data, function(d) { return d.seconds; })
+  var xmax = d3.max(data, function(d) { return d.seconds; });
+  var ymin = d3.min(data, function(d) { return d.voltage; });
+  var ymax = d3.max(data, function(d) { return d.voltage; });
+  console.log("d3.csv: xmin = " + xmin);
+  console.log("d3.csv: xmax = " + xmax);
+  console.log("d3.csv: ymin = " + ymin);
+  console.log("d3.csv: ymax = " + ymax);
+  if (ymin > 0.0) { ymin = 0.0; }
+
+  x = d3.scale.linear().domain([xmin,xmax]).range([0,width]);
+
+  y = d3.scale.linear().domain([ymin,ymax]).range([height,0]);
+  //logdata(data);
+  drawit(data);
+  */
+});
+
+function plotdata(data)  {
+  var xmin = d3.min(data, function(d) { return d.seconds; })
+  var xmax = d3.max(data, function(d) { return d.seconds; });
+  var ymin = d3.min(data, function(d) { return d.voltage; });
+  var ymax = d3.max(data, function(d) { return d.voltage; });
+  console.log("d3.csv: xmin = " + xmin);
+  console.log("d3.csv: xmax = " + xmax);
+  console.log("d3.csv: ymin = " + ymin);
+  console.log("d3.csv: ymax = " + ymax);
+  if (ymin > 0.0) { ymin = 0.0; }
+
+  x = d3.scale.linear().domain([xmin,xmax]).range([0,width]);
+
+  y = d3.scale.linear().domain([ymin,ymax]).range([height,0]);
+  //logdata(data);
+  drawit(data);
+}
+
+d3.csv("sine.csv", check_input, function(error, sinedata) {
+  if (error) throw error;
+  console.log("sinedata ...");
+  drawline(sinedata,"black");
+  //logdata(sinedata);
+});
+
+d3.csv("square.csv", check_input, function(error, squaredata) {
+  if (error) throw error;
+  console.log("squaredata ...");
+  //drawline(squaredata,"red");
+});
+
+function drawline(data, colorname)  {
+  var line = d3.svg.line()
+    .x(function(d) { return x(d.seconds); })
+    .y(function(d) { return y(d.voltage); });
+
+  svg.append("path")
+      .attr("class", "line")
+      .attr("d", function(d) { return line(data); })
+      .style("stroke", colorname);
+}
+function logdata(data) {
+  var arrayLength = data.length;
+  for (var i = 0; i < arrayLength; i++) {
+    console.log("data[" + i + "].seconds = " + data[i].seconds);
+    console.log("data[" + i + "].voltage = " + data[i].voltage);
+  }
+}
+
+function drawit(data) {
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+  var line = d3.svg.line()
+    .x(function(d) { return x(d.seconds); })
+    .y(function(d) { return y(d.voltage); });
+
+
+  console.log("drawit: append x axis: height = " + height);
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  console.log("drawit: append y axis");
+
+  svg.append("text")
+       .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
+       .style("text-anchor", "middle")
+       .text("Seconds");
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+
+  svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Volts");
+
+  svg.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
+}
+
+
+// convert to number (and maybe do some debugging)
+function check_input(d) {
+  d.seconds = +d.seconds;
+  d.voltage = +d.voltage;
+  //console.log("check_input.csv: d.seconds = " + d.seconds);
+  //console.log("check_input.csv: d.voltage = " + d.voltage);
+  return d;
+}
+
+</script>
