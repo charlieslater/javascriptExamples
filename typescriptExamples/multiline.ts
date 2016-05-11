@@ -1,24 +1,11 @@
 ///<reference path="d3.d.ts" />
 /// <reference path="jquery.d.ts" />
+declare var d3_queue: any  // fix bogus typescript error
 
-console.log("multiline.ts starting ...");
 // global variables
 var svg;
 var x;
 var y;
-var data;
-
-class SecondsVoltage {
-    seconds: number;
-    voltage: number;
-}
-
-interface MyPoint {
-  seconds: number;
-  voltage: number;
-}
-
-let point: MyPoint;
 
 class PageData {
     width: number;
@@ -60,7 +47,7 @@ function setup() {
     loadFiles();
 }
 
-window.onload = setup; // might want to use jQueyry $(document).ready()
+window.onload = setup; // might want to use jQuery $(document).ready()
 
 function convert_point(d) {
         d.seconds = +d.seconds;
@@ -70,6 +57,10 @@ function convert_point(d) {
         return d;
 }
 
+class SecondsVoltage {
+    seconds: number;
+    voltage: number;
+}
 
 class LineData {
     data: SecondsVoltage[];
@@ -183,8 +174,6 @@ function makechart(error, data1, data2, data3) {
     makecharts(pulseline.data);
 }
 
-
-
 function loadFiles(){
   var q = d3_queue.queue(3);
   q.defer(d3.csv,"pulse.csv")
@@ -230,6 +219,7 @@ class ZoomStatus {
         makecharts(pulseline.data);
     }
 }
+
 var zoomWidget = new ZoomStatus(0.5);
 
 $(document.body).on('keydown', function(e) {
