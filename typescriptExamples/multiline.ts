@@ -1,4 +1,5 @@
 ///<reference path="d3.d.ts" />
+/// <reference path="jquery.d.ts" />
 
 console.log("multiline.ts starting ...");
 // global variables
@@ -69,15 +70,6 @@ function convert_point(d) {
         return d;
 }
 
-function drawline(data, colorname) {
-    var line = d3.svg.line()
-        .x(function (d) { return x(d["seconds"]); })
-        .y(function (d) { return y(d["voltage"]); });
-    svg.append("path")
-        .attr("class", "line")
-        .attr("d", line(data))
-        .style("stroke", colorname);
-}
 function logdata(data) {
     var arrayLength = data.length;
     for (var i = 0; i < arrayLength; i++) {
@@ -106,10 +98,10 @@ class LineData {
        this.data = this.fulldata.slice(leftIndex,rightIndex)
     }
     
-    drawlinemethod() {
-      var line = d3.svg.line()
-        .x(function (d) { return x(d["seconds"]); })
-        .y(function (d) { return y(d["voltage"]); });
+    drawline() {
+      var line = d3.svg.line<{ seconds: number; voltage: number; }>()
+        .x(function (d) { return x(d.seconds); })
+        .y(function (d) { return y(d.voltage); });
       svg.append("path")
         .attr("class", "line")
         .attr("d", line(this.data))
@@ -160,8 +152,8 @@ function plotdata(data: Array<SecondsVoltage>) {
     //console.log("plotdata starting ...");
     //logdata(data);
     drawit(pulseline.data);
-    sineline.drawlinemethod();
-    squareline.drawlinemethod();
+    sineline.drawline();
+    squareline.drawline();
 }
 
 function zoom(factor) {
