@@ -31,13 +31,44 @@ class PageData {
 }
 var page = new PageData();
 
-function check_input(d) {
+function configChart(data) {
+    if (svg) {d3.select("svg").remove();}
+    svg = d3.select("body").append("svg")
+        .attr("width", page.width + page.margin.left + page.margin.right)
+        .attr("height", page.height + page.margin.top + page.margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + page.margin.left +
+              "," + page.margin.top + ")");
+    //console.log("setup: svg = " + svg);
+    var xmin = d3.min(data, function (d) { return d["seconds"]; });
+    var xmax = d3.max(data, function (d) { return d["seconds"]; });
+    var ymin = d3.min(data, function (d) { return d["voltage"]; });
+    var ymax = d3.max(data, function (d) { return d["voltage"]; });
+    //console.log("d3.csv: xmin = " + xmin);
+    //console.log("d3.csv: xmax = " + xmax);
+    //console.log("d3.csv: ymin = " + ymin);
+    //console.log("d3.csv: ymax = " + ymax);
+    if (ymin > 0.0) {
+        ymin = 0.0;
+    }
+    x = d3.scale.linear().domain([xmin, xmax]).range([0, page.width]);
+    y = d3.scale.linear().domain([ymin, ymax]).range([page.height, 0]);
+}
+
+function setup() {
+    loadFiles();
+}
+
+window.onload = setup;
+
+function convert_point(d) {
         d.seconds = +d.seconds;
         d.voltage = +d.voltage;
-        //console.log("check_input.csv: d.seconds = " + d.seconds);
-        //console.log("check_input.csv: d.voltage = " + d.voltage);
+        //console.log("convert_point.csv: d.seconds = " + d.seconds);
+        //console.log("convert_point.csv: d.voltage = " + d.voltage);
         return d;
 }
+
 function drawline(data, colorname) {
     var line = d3.svg.line()
         .x(function (d) { return x(d["seconds"]); })
@@ -55,36 +86,37 @@ function logdata(data) {
     }
 }
 
-function setup() {
-    loadFiles(["sine.csv"]);
-    svg = d3.select("body").append("svg")
-        .attr("width", page.width + page.margin.left + page.margin.right)
-        .attr("height", page.height + page.margin.top + page.margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + page.margin.left +
-              "," + page.margin.top + ")");
-    console.log("setup: svg = " + svg);
-}
-
-window.onload = setup;
-
 class LineData {
     data: SecondsVoltage[];
+    fulldata: SecondsVoltage[];
     color: string;
     filename: string;
+    zoomfactor: number
     constructor(public fname: string, colorname: string) {
        this.color = colorname;
        this.filename = fname;
+       this.zoomfactor = 1.0;
     }
+    zoomdata(factor) {
+       this.zoomfactor = factor;
+       let totalPoints = this.fulldata.length;
+       let halfPoints = this.zoomfactor * totalPoints/2;
+       let leftIndex = halfPoints
+       let rightIndex = totalPoints - halfPoints;
+       this.data = this.fulldata.slice(leftIndex,rightIndex)
+    }
+    
     drawlinemethod() {
-        console.log("LineData:drawline");
-        console.log("LineData:drawline: this.data[0] = "  + this.data[0]);
-        console.log("LineData:drawline: this.data[1] = "  + this.data[1]);
-        console.log("LineData:drawline: this.data[0].seconds = " + this.data[0].seconds);
-        console.log("LineData:drawline: this.data[0].voltage = " + this.data[0].voltage);
-        drawline(this.data, this.color);
+      var line = d3.svg.line()
+        .x(function (d) { return x(d["seconds"]); })
+        .y(function (d) { return y(d["voltage"]); });
+      svg.append("path")
+        .attr("class", "line")
+        .attr("d", line(this.data))
+        .style("stroke", this.color);
     }
 }
+var pulseline = new LineData("sine.csv","green");
 var sineline = new LineData("sine.csv","green");
 var squareline = new LineData("square.csv","red");
 
@@ -98,12 +130,12 @@ function drawit(data) {
     var line = d3.svg.line()
         .x(function (d) { return x(d["seconds"]); })
         .y(function (d) { return y(d["voltage"]); });
-    console.log("drawit: append x axis: height = " + page.height);
+    //console.log("drawit: append x axis: height = " + page.height);
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + page.height + ")")
         .call(xAxis);
-    console.log("drawit: append y axis");
+    //console.log("drawit: append y axis");
     svg.append("text")
         .attr("transform", "translate(" + (page.width / 2) + " ," + (page.height + page.margin.bottom) + ")")
         .style("text-anchor", "middle")
@@ -123,62 +155,116 @@ function drawit(data) {
         .attr("class", "line")
         .attr("d", line);
 }
+
 function plotdata(data: Array<SecondsVoltage>) {
-    console.log("plotdata starting ...");
-    var xmin = d3.min(data, function (d) { return d.seconds; });
-    var xmax = d3.max(data, function (d) { return d.seconds; });
-    var ymin = d3.min(data, function (d) { return d.voltage; });
-    var ymax = d3.max(data, function (d) { return d.voltage; });
-    console.log("d3.csv: xmin = " + xmin);
-    console.log("d3.csv: xmax = " + xmax);
-    console.log("d3.csv: ymin = " + ymin);
-    console.log("d3.csv: ymax = " + ymax);
-    if (ymin > 0.0) {
-        ymin = 0.0;
-    }
-    x = d3.scale.linear().domain([xmin, xmax]).range([0, page.width]);
-    y = d3.scale.linear().domain([ymin, ymax]).range([page.height, 0]);
+    //console.log("plotdata starting ...");
     //logdata(data);
-    drawit(data);
-    console.log("sineline = " + sineline + ": drawline");
+    drawit(pulseline.data);
     sineline.drawlinemethod();
     squareline.drawlinemethod();
 }
+
+function zoom(factor) {
+    //console.log("zoom starting ... factor = " + factor);
+    pulseline.zoomdata(factor);
+    sineline.zoomdata(factor);
+    squareline.zoomdata(factor);
+}
+
 function makecharts(data) {
-    console.log("makecharts: sineline = " + sineline);
-    console.log("makecharts: calling plotdata");
     plotdata(data);
 }
 
-function makelines(error, data1, data2, data3) {
-    console.log("makelines: data1[0] = " + data1[0]);
+function makechart(error, data1, data2, data3) {
+    //console.log("makechart: data1[0] = " + data1[0]);
     data1.forEach(function(d) {
-        check_input(d);
+        convert_point(d);
     });
     data = data1
+    pulseline.fulldata = pulseline.data = data1;
     data2.forEach(function(d) {
-        check_input(d);
+        convert_point(d);
     });
-    console.log("makelines: data2[0].seconds = " + data2[0].seconds);
-    console.log("makelines: data2[0].voltage = " + data2[0].voltage);
-    sineline.data = data2;
+    //console.log("makechart: data2[0].seconds = " + data2[0].seconds);
+    //console.log("makechart: data2[0].voltage = " + data2[0].voltage);
+    sineline.fulldata = sineline.data = data2;
     data3.forEach(function(d) {
-        check_input(d);
+        convert_point(d);
     });
-    squareline.data = data3;
-    console.log("makelines: calling makecharts");
-    makecharts(data);
+    squareline.fulldata = squareline.data = data3;
+    zoom(0.5);
+    configChart(pulseline.data);
+    //console.log("makechart: calling makecharts");
+    makecharts(pulseline.data);
 }
-function loadFiles(names){
+
+
+
+function loadFiles(){
   var q = d3_queue.queue(3);
   q.defer(d3.csv,"pulse.csv")
    .defer(d3.csv,"sine.csv")
    .defer(d3.csv,"square.csv")
-   .await(makelines);
-  console.log("loadFiles: waiting to run makelines");
+   .await(makechart);
+  //console.log("loadFiles: waiting to run makechart");
 }  
 
 // demonstrate that a line that looks like it runs last runs sooner
 console.log("page.width = " + page.width);
+
+class ZoomStatus {
+    partial: number;
+    factor: number;
+    constructor(factor: number) {
+       console.log("ZoomChart:constructor: factor =", factor);
+       this.factor = factor;
+       this.partial = factor * 100; 
+    }
+    zoomOut() {
+        if (this.partial > 0) {
+            this.factor = (--this.partial)/100;
+            this.zoomChart();
+        }
+    }
+    zoomIn() {
+        if (this.partial < 98) { 
+            this.factor = (++this.partial)/100;
+            this.zoomChart();
+        }
+    }
+    zoomChart() {
+        zoom(this.factor);
+        configChart(pulseline.data);
+        makecharts(pulseline.data);
+    }
+}
+var zoomWidget = new ZoomStatus(0.5);
+
+$(document.body).on('keydown', function(e) {
+            switch (e.which) {
+                // key code for left arrow
+                case 37:
+                    console.log('left arrow key pressed!');
+                    break;
+                case 38:
+                    console.log('up arrow key pressed!');
+                    break;
+                // key code for right arrow
+                case 39:
+                    console.log('right arrow key pressed!');
+                    break;
+                case 40:
+                    console.log('down arrow key pressed!');
+                    break;
+                case 187:
+                    zoomWidget.zoomIn();
+                    break;
+                case 189:
+                    zoomWidget.zoomOut();
+                    break;
+                default:
+                    console.log('key code = ' + e.which);
+            }
+});
 
 //# sourceMappingURL=multiline.js.map
