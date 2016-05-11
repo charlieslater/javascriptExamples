@@ -60,7 +60,7 @@ function setup() {
     loadFiles();
 }
 
-window.onload = setup;
+window.onload = setup; // might want to use jQueyry $(document).ready()
 
 function convert_point(d) {
         d.seconds = +d.seconds;
@@ -70,13 +70,6 @@ function convert_point(d) {
         return d;
 }
 
-function logdata(data) {
-    var arrayLength = data.length;
-    for (var i = 0; i < arrayLength; i++) {
-        console.log("data[" + i + "].seconds = " + data[i].seconds);
-        console.log("data[" + i + "].voltage = " + data[i].voltage);
-    }
-}
 
 class LineData {
     data: SecondsVoltage[];
@@ -201,6 +194,13 @@ function loadFiles(){
   //console.log("loadFiles: waiting to run makechart");
 }  
 
+function logdata(data) {
+    var arrayLength = data.length;
+    for (var i = 0; i < arrayLength; i++) {
+        console.log("data[" + i + "].seconds = " + data[i].seconds);
+        console.log("data[" + i + "].voltage = " + data[i].voltage);
+    }
+}
 // demonstrate that a line that looks like it runs last runs sooner
 console.log("page.width = " + page.width);
 
