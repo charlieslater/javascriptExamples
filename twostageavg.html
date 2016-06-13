@@ -1,0 +1,37 @@
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML"></script>
+<body>
+<h2>Proof that two-stage reduction by averaging over equal intervals produces the same result as one stage reduction.</h2>
+`(((sum_(i=1)^(N/2) v_i)/(N/2) + (sum_(i=(N/2+1))^(N/2) v_i)/(N/2)))/2`
+`= ((sum_(i=1)^N v_i)/(N/2))/2`
+<br> <br>
+`= (((sum_(i=1)^N v_i)/(N/2))/2) * (1/2)/(1/2)`
+`= ((sum_(i=1)^N v_i)/N)`
+<br> <br>
+Example:
+<pre>
+22+5+7+17+9+2+21+4+18+6 => 111 # total of 10 observations
+
+111.0 / 10 => 11.1  # average over all observations
+# split in two equal parts
+# first part:
+22+5+7+17+9 => 60
+60.0 /5 => 12.0     # average over first five observations
+
+# second part:
+2+21+4+18+6 => 51
+51.0 /5 => 10.2
+
+# average of two averages:
+(12.0 + 10.2)/2 => 11.1
+</pre>
+<br> <br>
+Generalize for an interval of <i>w</i> observations.
+<br> <br>
+
+`(((sum_(i=1)^(N/w) v_i)/(N/w) + (sum_(i=(N/w+1))^(2*w) v_i)/(N/w) + ... + (sum_(i=(N-w))^(N/w) v_i)/(N/w)))/w`
+`= ((sum_(i=1)^N v_i)/(N/w))/w`
+<br> <br>
+`= (((sum_(i=1)^N v_i)/(N/w))/w) * (1/w)/(1/w)`
+`= ((sum_(i=1)^N v_i)/N)`
+<br> <br>
+</body>
