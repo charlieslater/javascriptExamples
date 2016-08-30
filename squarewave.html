@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <title>Simple Line Graph using SVG and d3.js</title>
+    <script src="d3js.org/d3.v3.js"></script>
+    <style>
+      /* tell the SVG path to be a thin blue line without any area fill */
+      path {
+        stroke: steelblue;
+        stroke-width: 1;
+        fill: none;
+      }
+      
+      .shifted {
+        stroke: red;
+        stroke-width: 2;
+        fill: none;
+      }
+      .axis {
+        shape-rendering: crispEdges;
+      }
+
+      .x.axis line {
+        stroke: lightgrey;
+      }
+
+      .x.axis .minor {
+        stroke-opacity: .5;
+      }
+
+      .x.axis path {
+        display: none;
+      }
+
+      .y.axis line, .y.axis path {
+        fill: none;
+        stroke: #000;
+      }
+    </style>
+  </head>
+  <body>
+  <p>Shifted wave will appear in red</p>
+
+  <div id="graph" class="aGraph" style="position:absolute;top:0px;left:0; float:left;"></div>
+
+
+  <script>
+    
+    // define dimensions of graph
+    var m = [80, 80, 80, 80]; // margins
+    var w = 1000 - m[1] - m[3]; // width
+    var h = 500 - m[0] - m[2]; // height
+    
+    var data = [-2, -2, -2, -2, -2,
+                8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+                -2, -2, -2, -2, -2, -2, -2, -2, -2, -2,
+                8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+                -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, 
+                8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+                -2, -2, -2, -2, -2];
+
+    var maxV = d3.max(data);
+    var minV = d3.min(data);
+    var amplitude = (maxV - minV)/2;
+    console.log("minV = ", minV);
+    console.log("amplitude = ", amplitude);
+    var fractAmplitude = 0.05;  // should make this configurable/iterable.   
+    var hShift = 0;
+    var period = 0;
+
+    function computePeriod(data, maxV, minV, amplitude, fractAmplitude) {
+        var firstXofMax = -1;
+        var firstXofMin = -1;
+        var secondXofMax = -1;
+        var closeToMax = maxV - fractAmplitude*amplitude;
+        var closeToMin = minV + fractAmplitude*amplitude;
+        for (var i=0; i<data.length; i++) {
+             if (data[i] > closeToMax) {
+                 if (firstXofMax == -1) {
+                     firstXofMax = i;
+                     hShift = i;
+                 }
+                 if (firstXofMin == -1) 
+                     continue;
+                 secondXofMax = i;
+                 break;
+             }
+             if (firstXofMax != -1 && firstXofMin == -1 && data[i] < closeToMin) {
+                 firstXofMin = i;
+             }
+        }
+        console.log("hShift = ", hShift);
+        period = secondXofMax - firstXofMax;
+        console.log("period = ", period);
+    }
+    
+    computePeriod(data, maxV, minV, amplitude, fractAmplitude);
+    function generateSquareWave(hShift,maxV,minV,period,waveFormLength) {
+        var i;
+        ary = [];
+        for (i=0; i<hShift; i++) {
+            ary.push(minV);
+        }
+        while (i<waveFormLength) {
+            lim = Math.min(i+period/2,waveFormLength);
+            for (; i<lim; i++) {
+                ary.push(maxV);
+            }
+            lim = Math.min(i+period/2,waveFormLength);
+            for (; i<lim; i++) {
+                ary.push(minV);
+            }
+        }
+        return ary;
+    }
+    sqData = generateSquareWave(hShift,maxV,minV,period,data.length); 
+    console.log("generated square waveform = ", sqData);
+    console.log("original waveform = ", data);
+
+    var x = d3.scale.linear().domain([0, data.length]).range([0, w]);
+    var y = d3.scale.linear().domain([-5, 10]).range([h, 0]);
+
+    var line = d3.svg.line()
+      .x(function(d,i) { 
+        return x(i); 
+      })
+      .y(function(d) { 
+        return y(d); 
+      });
+
+    // Add an SVG element with the desired dimensions and margin.
+    var graph = d3.select("#graph").append("svg:svg")
+            .attr("width", w + m[1] + m[3])
+            .attr("height", h + m[0] + m[2])
+          .append("svg:g")
+            .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+    // create yAxis
+    var xAxis = d3.svg.axis().scale(x).tickSize(-h).tickSubdivide(true);
+    // Add the x-axis.
+    graph.append("svg:g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + h + ")")
+            .call(xAxis);
+
+
+    // create left yAxis
+    var yAxisLeft = d3.svg.axis().scale(y).ticks(4).orient("left");
+    // Add the y-axis to the left
+    graph.append("svg:g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(-25,0)")
+            .call(yAxisLeft);
+      
+    // do this AFTER the axes above so that the line is above the tick-lines
+    lineongraph = graph.append("svg:path").attr("d", line(data)).attr("class","line");
+    shiftedData = data.slice(hShift);
+    phaseshiftline = graph.append("svg:path").transition()
+                     .delay(750)
+                     .attr("class", "shifted").attr("d", line(shiftedData));
+            
+            
+      
+
+  </script>
+
+
+
+  </body>
+</html>
