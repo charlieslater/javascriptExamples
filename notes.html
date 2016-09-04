@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+    <title>Simple Line Graph using SVG and d3.js</title>
+    <script src="d3js.org/d3.v3.js"></script>
+    <style>
+      p {
+        width: 50%;
+      }
+      /* tell the SVG path to be a thin blue line without any area fill */
+      path {
+        stroke: steelblue;
+        stroke-width: 1;
+        fill: none;
+      }
+       
+      .shifted {
+        stroke: red;
+        stroke-width: 2;
+        fill: none;
+      }
+      .axis {
+        shape-rendering: crispEdges;
+      }
+
+      .x.axis line {
+        stroke: lightgrey;
+      }
+
+      .x.axis .minor {
+        stroke-opacity: .5;
+      }
+
+      .x.axis path {
+        display: none;
+      }
+
+      .y.axis line, .y.axis path {
+        fill: none;
+        stroke: #000;
+      }
+    </style>
+  </head>
+  <body>
+<p>
+Assume you have a vector "msecValues" of 60 millisecond time values like this:
+</p>
+<pre>
+msecValues = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+50, 51, 52, 53, 54, 55, 56, 57, 58, 59]
+
+You can generate these in Python with 
+
+>>> msecValues = range(60)
+
+Or in JavaScript and D3 with
+
+var msecValues = d3.range(60);
+
+When a time value, "msecs", is even, we want a voltage value of +2
+volts.  When mecs is odd, we want the voltage value to be -2 volts.
+This can be done in Python as follows:
+
+>>> [2 - 4 * (msecs%2) for msecs in msecValues]
+[2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2,
+-2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2,
+2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2, -2, 2,
+-2, 2, -2]
+
+</pre>
+<p>
+The period of the square wave is one millisecond and the amplitude
+is two volts.  Suppose we want to change the amplitude to three
+volts.  This formula would work:
+</p>
+<pre>
+>>> [3 - 6 * (msecs%2) for msecs in msecValues]
+[3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3,
+-3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3,
+3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3,
+-3, 3, -3]
+
+We can make this a general function of amplidute, A, as follows:
+
+>>> [A - 2*A * (msecs%2) for msecs in msecValues]
+[3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3,
+-3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3,
+3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3, -3, 3,
+-3, 3, -3]
+
+What if the perid of the wave is not two milliseconds.  We simply
+need to scale it to 2 with a scaling factor, S, that we get from
+this formula
+
+2 * S = P  or S = P/2
+
+(Note: S will be P/2 for the rest of this document.  I don't know
+the standard name for half of the period.  I just get tired of
+typing "P/2".)
+
+For example, if we want a period of 6 milliseconds, we use this formula
+
+S = 6/2
+
+>>> [A - 2*A * (msecs/S%2) for msecs in msecValues]
+
+[3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3,
+3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3,
+3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3,
+-3, -3, -3]
+</pre>
+<p>It produces a square wave that looks like this:<p>
+<div id="sqWave1"></div>
+
+<pre>
+This is the equivalent JavaScript:
+
+// [A - 2*A * (msecs/S%2) for msecs in msecValues]
+function sqWave(msecValues,A,S) {
+    ary = [];
+    for (let msecs in msecValues) {
+        ary.push(Math.round(A - 2*A * (Math.floor(msecs/S)%2)));
+    }
+    return ary
+}
+</pre>
+<p>
+Suppose we want a pulse function that cycles every ten milliseconds.
+It is +3 volts for the first millisecond and -3 volts for the next
+nine milliseconds, then +3 volts for 11th millisecond, and so on.
+</p>
+<pre>
+
+[A - 2*A * bool((msecs)%10) for msecs in msecValues]
+[3, -3, -3, -3, -3, -3, -3, -3, -3, -3, 3, -3, -3, -3, -3, -3, -3,
+-3, -3, -3, 3, -3, -3, -3, -3, -3, -3, -3, -3, -3, 3, -3, -3, -3,
+-3, -3, -3, -3, -3, -3, 3, -3, -3, -3, -3, -3, -3, -3, -3, -3, 3,
+-3, -3, -3, -3, -3, -3, -3, -3, -3]
+
+</pre>
+<p>
+Assume we want a wider pulse: +3 volts for the first 2 milliseconds,
+-3 volts for the next 8 milliseconds, +3 volts for the next two and
+so on.  We simply divide milliseconds and the length of the cycle
+by two.  like this:
+</p>
+<pre>
+
+>>> [A - 2*A * bool((msecs/2) % (10/2)) for msecs in msecValues]
+[3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3, -3, -3,
+-3, -3, -3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3,
+-3, -3, -3, -3, -3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3,
+-3, -3, -3, -3, -3, -3, -3]
+
+In general, if we have a cycle time C and a pulse width W, the formula is this:
+
+>>> C = 10
+>>> W = 2
+>>> [A - 2*A * bool((msecs/W) % (C/W)) for msecs in msecValues]
+[3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3, -3, -3,
+-3, -3, -3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3,
+-3, -3, -3, -3, -3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3,
+-3, -3, -3, -3, -3, -3, -3]
+
+</pre>
+<p>It produces a pulse wave that looks like this:<p>
+<div id="pulseWave1"></div>
+
+<pre>
+Another example:
+
+>>> W = 4
+>>> C = 20
+>>> [A - 2*A * bool((msecs/W) % (C/W)) for msecs in msecValues]
+[3, 3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3,
+-3, -3, -3, 3, 3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3,
+-3, -3, -3, -3, -3, 3, 3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, -3,
+-3, -3, -3, -3, -3, -3, -3]
+
+Triangle wave ...
+
+[ 2, 1, 0, -1, -2, -1, 0, 1, 2, 1, ... ]
+
+We get the the postive/negative sign from a square wave of amplitude one volt and the fraction of the amplitude from (A - (float(msecs) % S)* 2*A/S).  For example:
+
+A = 2
+S = 4
+[(1 - 2 * (msecs/S%2))* (A - (float(msecs) % S)* 2*A/S) for msecs in msecValues]
+[2.0, 1.0, 0.0, -1.0, -2.0, -1.0, -0.0, 1.0, 2.0, 1.0, 0.0, -1.0,
+-2.0, -1.0, -0.0, 1.0, 2.0, 1.0, 0.0, -1.0, -2.0, -1.0, -0.0, 1.0,
+2.0, 1.0, 0.0, -1.0, -2.0, -1.0, -0.0, 1.0, 2.0, 1.0, 0.0, -1.0,
+-2.0, -1.0, -0.0, 1.0, 2.0, 1.0, 0.0, -1.0, -2.0, -1.0, -0.0, 1.0,
+2.0, 1.0, 0.0, -1.0, -2.0, -1.0, -0.0, 1.0, 2.0, 1.0, 0.0, -1.0]
+
+Now that we are clear on how to generate square waves, pulse waves,
+and triangle waves, making a sine wave is easy:
+
+[round(math.sin(msecs),4) for msecs in msecValues]
+
+Or with scaling for amplitude:
+
+[round(A*math.sin(msecs),4) for msecs in msecValues]
+
+We can also add a scaling factor derived from the period:
+
+>>> A = 3
+>>> S = 3
+>>> [round(A*math.sin(float(msecs)/S),4) for msecs in msecValues]
+
+[0.0, 0.9816, 1.8551, 2.5244, 2.9158, 2.9862, 2.7279, 2.1693, 1.3718,
+0.4234, -0.5717, -1.5038, -2.2704, -2.787, -2.9969, -2.8768, -2.44,
+-1.7346, -0.8382, 0.1504, 1.1225, 1.971, 2.6025, 2.9475, 2.9681,
+2.6619, 2.0627, 1.2364, 0.274, -0.7186, -1.6321, -2.3658, -2.8392,
+-3.0, -2.8305, -2.3494, -1.6097, -0.6928, 0.3004, 1.2605, 2.0819,
+2.674, 2.9718, 2.9425, 2.5892, 1.9509, 1.0978, 0.1239, -0.8637,
+-1.7562, -2.4553, -2.8842, -2.9955, -2.7771, -2.253, -1.4808,
+-0.5456, 0.4496, 1.3954, 2.1875]
+
+</pre>
+<p>The sine wave looks like this:<p>
+<div id="sineWave1"></div>
+
+<h3>Sawtooth Exercise</h3>
+
+The formula for a sawtooth wave looks something like this:
+
+<pre>
+>>> S = 8
+>>> A = 8
+>>> [(-A + (float(msecs) % S)* 2*A/S) for msecs in msecValues]
+[-8.0, -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0, -8.0, -6.0, -4.0, -2.0,
+0.0, 2.0, 4.0, 6.0, -8.0, -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
+-8.0, -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0, -8.0, -6.0, -4.0, -2.0,
+0.0, 2.0, 4.0, 6.0, -8.0, -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0,
+-8.0, -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0, -8.0, -6.0, -4.0, -2.0]
+
+</pre>
+<p>
+Tune this formula so that it supports both a ascending slanted line
+and a descending slanted line.  Add an extra point with the same
+time coordinate so that the vertical line connects maximum and
+minimum volts.
+</p>
+references:
+<br>
+https://www.youtube.com/watch?v=HtSuA80QTyo
+  </body>
+  <script src="plotvector.js"></script>
+</html>
