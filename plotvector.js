@@ -22,6 +22,20 @@
 
     graphData(data, "#sqWave1");
 
+    data = [3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3,
+	    -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3,
+	    -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3,
+	    3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3];
+
+    graphData(data, "#sqWave2");
+
+    data = [-3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3,
+	    3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3,
+	    -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3,
+	    3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3];
+
+    graphData(data, "#sqWave3");
+
     data = [3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3,
 	    -3, -3, -3, -3, -3, 3, 3, -3, -3, -3, -3, -3, -3, -3,
 	    -3, 3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3,
@@ -104,10 +118,10 @@ voltages = pulesWave(msecValues,A,W,C)
 console.log("generated pulse wave voltages = ", voltages);
 
 function sumSquareError(measured, generated) {
-    var c = measured.map(function (e, i) {
+    var squaredErrors = measured.map(function (e, i) {
         return Math.pow(measured[i] - generated[i],2);
     });
-    return d3.sum(c);
+    return d3.sum(squaredErrors);
 }
 
 var measured = [3,1,4,1,5,9];
