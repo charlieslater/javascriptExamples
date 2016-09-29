@@ -1,7 +1,22 @@
     // define dimensions of graph
-    var m = [80, 80, 80, 80]; // margins
-    var w = 600 - m[1] - m[3]; // width
-    var h = 0.6*w - m[0] - m[2]; // height
+    // var m = [80, 80, 80, 80]; // margins
+    // var w = 600 - m[1] - m[3]; // width
+    // var h = 0.6*w - m[0] - m[2]; // height
+
+    function buildChartWindow() {
+        margins = {top: 80, right: 80, bottom: 80, left: 80};
+        cw = {
+            margins: margins,
+            aspectRatio:  0.6,
+            fullWidth:  600
+        }
+        cw['fullHeight'] = cw.aspectRatio * 600;
+        cw['width'] = cw.fullWidth - margins.right - margins.left;
+        cw['height'] = cw.fullHeight - margins.top - margins.bottom;
+        return cw;
+    }
+
+    var chartWindow = buildChartWindow();
     
     var data = [3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3,
 		-3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3,
@@ -9,16 +24,6 @@
 		3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3,
 		-3, -3];
 
-    var x = d3.scale.linear().domain([0, data.length]).range([0, w]);
-    var y = d3.scale.linear().domain([-4, 4]).range([h, 0]);
-
-    var line = d3.svg.line()
-      .x(function(d,i) { 
-        return x(i); 
-      })
-      .y(function(d) { 
-        return y(d); 
-      });
 
     graphData(data, "#sqWave1");
 
@@ -34,6 +39,8 @@
 	    -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3,
 	    3, 3, -3, -3, -3, 3, 3, 3, -3, -3, -3, 3, 3, 3];
 
+    var sqWave3Data = data;
+
     graphData(data, "#sqWave3");
 
     data = [3, 3, -3, -3, -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3,
@@ -42,7 +49,8 @@
 	    -3, -3, -3, -3, -3, -3, 3, 3, -3, -3, -3, -3, -3, -3,
 	    -3, -3];
 
-    graphData(data, "#pulseWave1");
+    var pulseGraph = graphData(data, "#pulseWave1");
+    addLine(pulseGraph, sqWave3Data);
 
     data = [0.0, 0.9816, 1.8551, 2.5244, 2.9158, 2.9862, 2.7279, 2.1693, 1.3718,
             0.4234, -0.5717, -1.5038, -2.2704, -2.787, -2.9969, -2.8768, -2.44,
@@ -55,24 +63,44 @@
 
     graphData(data, "#sineWave1");
 
+function lineScalesFromData(data) {
+    //var xValues = d3.range(data.length);
+    //console.log("xValues = ", xValues);
+    //var x = d3.scale.ordinal().domain(xValues).rangePoints([0,chartWindow.width]);
+    var x = d3.scale.linear().domain([0, data.length]).range([0, chartWindow.width]);
+    var y = d3.scale.linear().domain([-4, 4]).range([chartWindow.height, 0]);
+    var pxScalers = {
+        xScaler: x,
+        yScaler: y
+    } 
+    var line = d3.svg.line()
+      .x(function(d,i) { 
+        return x(i); 
+      })
+      .y(function(d) { 
+        return y(d); 
+      });
+    return [line, pxScalers];
+}
 function graphData(data,tagID) {
+    var [line, pxScalers] = lineScalesFromData(data);
     var graph = d3.select(tagID).append("svg:svg")
-            .attr("width", w + m[1] + m[3])
-            .attr("height", h + m[0] + m[2])
+            .attr("width", chartWindow.fullWidth)
+            .attr("height", chartWindow.fullHeight)
           .append("svg:g")
-            .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+            .attr("transform", "translate(" + chartWindow.margins.left + "," + chartWindow.margins.top + ")");
 
     // create yAxis
-    var xAxis = d3.svg.axis().scale(x).tickSize(-h).tickSubdivide(true);
+    var xAxis = d3.svg.axis().scale(pxScalers.xScaler).tickSize(-chartWindow.height).tickSubdivide(true);
     // Add the x-axis.
     graph.append("svg:g")
             .attr("class", "x axis")
-            .attr("transform", "translate(0," + h + ")")
+            .attr("transform", "translate(0," + chartWindow.height + ")")
             .call(xAxis);
 
 
     // create left yAxis
-    var yAxisLeft = d3.svg.axis().scale(y).ticks(4).orient("left");
+    var yAxisLeft = d3.svg.axis().scale(pxScalers.yScaler).ticks(4).orient("left");
     // Add the y-axis to the left
     graph.append("svg:g")
             .attr("class", "y axis")
@@ -80,6 +108,15 @@ function graphData(data,tagID) {
             .call(yAxisLeft);
       
     graph.append("svg:path").attr("d", line(data)).attr("class","line");
+    return graph
+}
+
+function addLine(graph, data) {
+    var [line, pxScalers] = lineScalesFromData(data);
+    graph.append("svg:path").transition()
+                     .delay(2750)
+                     .attr("class", "fatred").attr("d", line(data));
+    //graph.append("svg:path").attr("d", line(data)).attr("class","line");
 }
 
 // [A - 2*A * (msecs/S%2) for msecs in msecValues]
