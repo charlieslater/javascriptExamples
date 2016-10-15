@@ -35,14 +35,14 @@ var svg = d3.select("body").append("svg")
 
 //
 // main idea: use array of overlays to build combine array of
-// (time,voltage) coordinatesd
+// (time,voltage) coordinates
 //
 
 function pointsFromOverlays(overlays) {
   let data = [];
   for (let overlay of overlays) {
     let secs = 0;
-    for (v of overlay) {
+    for (let v of overlay) {
       let d = {seconds: secs, volts: v};
       data.push(d);
       secs += 1;
