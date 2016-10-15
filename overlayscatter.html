@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+  font: 10px sans-serif;
+  background: black;
+}
+
+
+.dot {
+  stroke: #000;
+}
+</style>
+<body>
+<script src="d3js.org/d3.v3.min.js"></script>
+<script>
+
+var sampleData = makeSampleData();
+
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+    .range([0, width]);
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+//
+// main idea: use array of overlays to build combine array of
+// (time,voltage) coordinatesd
+//
+
+function pointsFromOverlays(overlays) {
+  let data = [];
+  for (let overlay of overlays) {
+    let secs = 0;
+    for (v of overlay) {
+      let d = {seconds: secs, volts: v};
+      data.push(d);
+      secs += 1;
+    }
+  }
+  return data
+}
+
+// From overlays, create a combined array of (time, voltage) coordinates.
+function plotSampleData(overlays, color) {
+  let data = pointsFromOverlays(overlays);
+  plotit(data, color);
+  console.log("plotit done");
+}
+
+let overlays = simulatedOverlays(700);
+plotSampleData(overlays,'yellow');
+
+// plotit expects the combined array of (time,voltage) coordinates 
+// (and a color)
+function plotit(data, color) {
+  data.forEach(function(d) {
+    d.volts = +d.volts;
+    d.seconds = +d.seconds;
+  });
+
+  x.domain(d3.extent(data, function(d) { return d.seconds; })).nice();
+  y.domain(d3.extent(data, function(d) { return d.volts; })).nice();
+
+  svg.selectAll(".dot")
+      .data(data)
+    .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", 0.3)
+      .attr("cx", function(d) { return x(d.seconds); })
+      .attr("cy", function(d) { return y(d.volts); })
+      .style("fill", function(d) { return color; })
+      .style("stroke", function(d) { return color; });
+
+  console.log("dots done");
+
+};
+
+
+//
+// create simulated array of waveforms (voltage vectors)
+// overlays = [waveform, waveform, ..., waveform ]
+// that is:
+// overlays = [[v1,v2,v3,...],[v1,v2,v3,...],...,[v1,v2,v3,...]]
+//
+
+function simulatedOverlays(numWaveforms) {
+  console.log("simulatedOverlays: numWaveforms=",numWaveforms);
+  let overlays = [];
+  for (let i=0;i<numWaveforms;i++) {
+    overlays.push(simulateOverlay());
+  } 
+  return overlays
+}
+
+function simulateOverlay() {
+  let gerr = gaussian(0, 0.2);
+  let data = [], i = 0;
+  for (let v of sampleData) {
+      let sign = 1 - 2 * (i % 2)
+      let err = sign * gerr() 
+      v = v + err;  // fake random error in voltage
+      data.push(v);
+      i += 1;
+  }
+  return data
+  //console.log("simulatedOverlay: data=",data);
+}
+
+function gaussian(mean, stdev) {
+    var y2;
+    var use_last = false;
+    return function() {
+        var y1;
+        if(use_last) {
+           y1 = y2;
+           use_last = false;
+        }
+        else {
+            var x1, x2, w;
+            do {
+                 x1 = 2.0 * Math.random() - 1.0;
+                 x2 = 2.0 * Math.random() - 1.0;
+                 w  = x1 * x1 + x2 * x2;               
+            } while( w >= 1.0);
+            w = Math.sqrt((-2.0 * Math.log(w))/w);
+            y1 = x1 * w;
+            y2 = x2 * w;
+            use_last = true;
+       }
+
+       var retval = mean + stdev * y1;
+       if(retval > 0) 
+           return retval;
+       return -retval;
+   }
+}
+
+function makeSampleData() {
+  let shortData = [0.0, 0.9816, 1.8551, 2.5244, 2.9158, 2.9862, 2.7279, 
+    2.1693, 1.3718, 0.4234, -0.5717, -1.5038, -2.2704, -2.787, -2.9969,
+    -2.8768, -2.44, -1.7346, -0.8382, 0.1504, 1.1225, 1.971, 2.6025,
+    2.9475, 2.9681, 2.6619, 2.0627, 1.2364, 0.274, -0.7186, -1.6321,
+    -2.3658, -2.8392, -3.0, -2.8305, -2.3494, -1.6097, -0.6928,
+    0.3004, 1.2605, 2.0819, 2.674, 2.9718, 2.9425, 2.5892, 1.9509,
+    1.0978, 0.1239, -0.8637, -1.7562, -2.4553, -2.8842, -2.9955,
+    -2.7771, -2.253, -1.4808, -0.5456, 0.4496, 1.3954, 2.1875];
+  newData = [];
+  for (i=1;i<shortData.length;i++) {
+    v1 = shortData[i]; v0 = shortData[i-1];
+    newData.push(v0);
+    newData.push(v0 + (v1-v0)/2);
+  }
+  return newData
+}
+
+</script>
